@@ -2,7 +2,7 @@ import Darwin
 import Foundation
 
 enum AppVersion {
-    static let current = "0.1.7"
+    static let current = "0.1.8"
 }
 
 enum AppCommand {
