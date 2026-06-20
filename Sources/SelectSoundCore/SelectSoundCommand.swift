@@ -142,10 +142,12 @@ public final class SelectSoundCommand {
             devices: inputDevices,
             currentDevice: currentInput
         )
+        let matchedOutput = outputDevices.first(withUID: selectedInput.uid)
         let selectedOutput = try selectDevice(
             direction: .output,
             devices: outputDevices,
-            currentDevice: currentOutput
+            currentDevice: currentOutput,
+            suggestedDevice: matchedOutput
         )
 
         guard try confirm(
@@ -186,11 +188,19 @@ public final class SelectSoundCommand {
     private func selectDevice(
         direction: DeviceDirection,
         devices: [AudioDevice],
-        currentDevice: AudioDevice?
+        currentDevice: AudioDevice?,
+        suggestedDevice: AudioDevice? = nil
     ) throws -> AudioDevice {
-        let orderedDevices = ordered(devices: devices, currentDevice: currentDevice)
+        let orderedDevices = ordered(
+            devices: devices,
+            currentDevice: currentDevice,
+            suggestedDevice: suggestedDevice
+        )
         let selectableCurrentDevice = currentDevice.flatMap { current in
             orderedDevices.first(withUID: current.uid)
+        }
+        let selectableSuggestedDevice = suggestedDevice.flatMap { suggested in
+            orderedDevices.first(withUID: suggested.uid)
         }
 
         while true {
@@ -199,10 +209,17 @@ public final class SelectSoundCommand {
                 var line = "  \(index + 1). \(displayName(for: device, among: orderedDevices))"
                 if selectableCurrentDevice?.uid == device.uid {
                     line += " (\(strings.currentMarker))"
+                } else if selectableSuggestedDevice?.uid == device.uid {
+                    line += " (\(strings.matchesInputMarker))"
                 }
                 writeLine(line)
             }
-            writePrompt(strings.prompt(hasCurrentDevice: selectableCurrentDevice != nil))
+            let suggestionDiffersFromCurrent = selectableSuggestedDevice != nil
+                && selectableSuggestedDevice?.uid != selectableCurrentDevice?.uid
+            writePrompt(strings.prompt(
+                hasCurrentDevice: selectableCurrentDevice != nil,
+                hasSuggestionDifferingFromCurrent: suggestionDiffersFromCurrent
+            ))
 
             guard let rawInput = readInput() else {
                 throw SelectSoundCommandError.cancelled
@@ -214,6 +231,9 @@ public final class SelectSoundCommand {
             }
 
             if input.isEmpty {
+                if let selectableSuggestedDevice {
+                    return selectableSuggestedDevice
+                }
                 if let selectableCurrentDevice {
                     return selectableCurrentDevice
                 }
@@ -372,7 +392,11 @@ public final class SelectSoundCommand {
         return failures
     }
 
-    private func ordered(devices: [AudioDevice], currentDevice: AudioDevice?) -> [AudioDevice] {
+    private func ordered(
+        devices: [AudioDevice],
+        currentDevice: AudioDevice?,
+        suggestedDevice: AudioDevice? = nil
+    ) -> [AudioDevice] {
         let sortedDevices = devices.sorted {
             let leftName = $0.name.localizedCaseInsensitiveCompare($1.name)
             if leftName == .orderedSame {
@@ -381,12 +405,13 @@ public final class SelectSoundCommand {
             return leftName == .orderedAscending
         }
 
-        guard let currentDevice,
-              let current = sortedDevices.first(withUID: currentDevice.uid) else {
+        let priorityDevice = suggestedDevice ?? currentDevice
+        guard let priorityDevice,
+              let priority = sortedDevices.first(withUID: priorityDevice.uid) else {
             return sortedDevices
         }
 
-        return [current] + sortedDevices.filter { $0.uid != current.uid }
+        return [priority] + sortedDevices.filter { $0.uid != priority.uid }
     }
 
     private func displayName(for device: AudioDevice, among devices: [AudioDevice]) -> String {

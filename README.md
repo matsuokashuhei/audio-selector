@@ -15,6 +15,8 @@ audio-selector
 
 各デバイス選択では、Enter で現在のデバイスを維持できます。`q` または Ctrl-C でキャンセルできます。
 
+選んだ音声入力デバイスと対応する音声出力デバイス（同じ物理デバイス）がある場合、出力画面でそのデバイスを提案します。Enter で提案を受け入れ、別の番号で上書きできます。
+
 内蔵の音声入力デバイスと音声出力デバイスへすぐに切り替える場合は、非対話モードを使えます。
 
 ```sh
@@ -79,5 +81,7 @@ audio-selector
 ```
 
 Press Enter to keep the current device during input/output selection. Enter `q` or press Ctrl-C to cancel. On the confirmation screen, Enter applies the selected devices and Esc cancels.
+
+When the selected input device has a corresponding output device (the same physical device), it is suggested on the output screen. Press Enter to accept the suggestion, or type a number to override.
 
 Use `audio-selector --built-in` or `audio-selector -b` to immediately apply the built-in audio input and output devices without prompts.
