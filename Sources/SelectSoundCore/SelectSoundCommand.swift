@@ -153,7 +153,7 @@ public final class SelectSoundCommand {
             devices: inputDevices,
             currentDevice: currentInput
         )
-        let matchedOutput = outputDevices.first(withUID: selectedInput.uid)
+        let matchedOutput = outputDevices.first(withName: selectedInput.name)
         let selectedOutput = try selectDevice(
             direction: .output,
             devices: outputDevices,
