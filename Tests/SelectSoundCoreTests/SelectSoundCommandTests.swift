@@ -442,15 +442,15 @@ final class SelectSoundCommandTests: XCTestCase {
         XCTAssertTrue(result.stdout.contains("USB Audio (UID: input-3)"))
     }
 
-    func testSuggestsCorrespondingOutputDeviceWhenUIDMatches() {
+    func testSuggestsCorrespondingOutputDeviceWhenNameMatches() {
         let fake = FakeAudioSystem()
         fake.inputs = [
             AudioDevice(id: 1, uid: "builtin-mic", name: "Built-in Microphone", isBuiltIn: true),
-            AudioDevice(id: 2, uid: "headset", name: "USB Headset", isBuiltIn: false)
+            AudioDevice(id: 2, uid: "headset-input", name: "USB Headset", isBuiltIn: false)
         ]
         fake.outputs = [
             AudioDevice(id: 11, uid: "builtin-speakers", name: "Built-in Speakers", isBuiltIn: true),
-            AudioDevice(id: 12, uid: "headset", name: "USB Headset", isBuiltIn: false)
+            AudioDevice(id: 12, uid: "headset-output", name: "USB Headset", isBuiltIn: false)
         ]
         fake.defaultInput = fake.inputs[0]
         fake.defaultOutput = fake.outputs[0]
@@ -458,19 +458,19 @@ final class SelectSoundCommandTests: XCTestCase {
         let result = runCommand(fake: fake, input: ["2", ""], confirmationKeys: [.enter])
 
         XCTAssertEqual(result.code, 0)
-        XCTAssertEqual(fake.defaultInput?.uid, "headset")
-        XCTAssertEqual(fake.defaultOutput?.uid, "headset")
+        XCTAssertEqual(fake.defaultInput?.uid, "headset-input")
+        XCTAssertEqual(fake.defaultOutput?.uid, "headset-output")
     }
 
     func testShowsMatchesInputMarkerForCorrespondingOutputDevice() {
         let fake = FakeAudioSystem()
         fake.inputs = [
             AudioDevice(id: 1, uid: "builtin-mic", name: "Built-in Microphone", isBuiltIn: true),
-            AudioDevice(id: 2, uid: "headset", name: "USB Headset", isBuiltIn: false)
+            AudioDevice(id: 2, uid: "headset-input", name: "USB Headset", isBuiltIn: false)
         ]
         fake.outputs = [
             AudioDevice(id: 11, uid: "builtin-speakers", name: "Built-in Speakers", isBuiltIn: true),
-            AudioDevice(id: 12, uid: "headset", name: "USB Headset", isBuiltIn: false)
+            AudioDevice(id: 12, uid: "headset-output", name: "USB Headset", isBuiltIn: false)
         ]
         fake.defaultInput = fake.inputs[0]
         fake.defaultOutput = fake.outputs[0]
@@ -484,11 +484,11 @@ final class SelectSoundCommandTests: XCTestCase {
         let fake = FakeAudioSystem()
         fake.inputs = [
             AudioDevice(id: 1, uid: "builtin-mic", name: "Built-in Microphone", isBuiltIn: true),
-            AudioDevice(id: 2, uid: "headset", name: "USB Headset", isBuiltIn: false)
+            AudioDevice(id: 2, uid: "headset-input", name: "USB Headset", isBuiltIn: false)
         ]
         fake.outputs = [
             AudioDevice(id: 11, uid: "builtin-speakers", name: "Built-in Speakers", isBuiltIn: true),
-            AudioDevice(id: 12, uid: "headset", name: "USB Headset", isBuiltIn: false)
+            AudioDevice(id: 12, uid: "headset-output", name: "USB Headset", isBuiltIn: false)
         ]
         fake.defaultInput = fake.inputs[0]
         fake.defaultOutput = fake.outputs[0]
@@ -506,11 +506,11 @@ final class SelectSoundCommandTests: XCTestCase {
         let fake = FakeAudioSystem()
         fake.inputs = [
             AudioDevice(id: 1, uid: "builtin-mic", name: "Built-in Microphone", isBuiltIn: true),
-            AudioDevice(id: 2, uid: "headset", name: "USB Headset", isBuiltIn: false)
+            AudioDevice(id: 2, uid: "headset-input", name: "USB Headset", isBuiltIn: false)
         ]
         fake.outputs = [
             AudioDevice(id: 11, uid: "builtin-speakers", name: "Built-in Speakers", isBuiltIn: true),
-            AudioDevice(id: 12, uid: "headset", name: "USB Headset", isBuiltIn: false)
+            AudioDevice(id: 12, uid: "headset-output", name: "USB Headset", isBuiltIn: false)
         ]
         fake.defaultInput = fake.inputs[0]
         fake.defaultOutput = fake.outputs[1]
@@ -525,11 +525,11 @@ final class SelectSoundCommandTests: XCTestCase {
         let fake = FakeAudioSystem()
         fake.inputs = [
             AudioDevice(id: 1, uid: "builtin-mic", name: "Built-in Microphone", isBuiltIn: true),
-            AudioDevice(id: 2, uid: "headset", name: "USB Headset", isBuiltIn: false)
+            AudioDevice(id: 2, uid: "headset-input", name: "USB Headset", isBuiltIn: false)
         ]
         fake.outputs = [
             AudioDevice(id: 11, uid: "builtin-speakers", name: "Built-in Speakers", isBuiltIn: true),
-            AudioDevice(id: 12, uid: "headset", name: "USB Headset", isBuiltIn: false)
+            AudioDevice(id: 12, uid: "headset-output", name: "USB Headset", isBuiltIn: false)
         ]
         fake.defaultInput = fake.inputs[0]
         fake.defaultOutput = fake.outputs[0]
@@ -537,19 +537,19 @@ final class SelectSoundCommandTests: XCTestCase {
         let result = runCommand(fake: fake, input: ["2", ""], confirmationKeys: [.enter])
 
         XCTAssertEqual(result.code, 0)
-        XCTAssertEqual(fake.defaultOutput?.uid, "headset")
-        XCTAssertEqual(fake.setOutputHistory, ["headset"])
+        XCTAssertEqual(fake.defaultOutput?.uid, "headset-output")
+        XCTAssertEqual(fake.setOutputHistory, ["headset-output"])
     }
 
     func testOverrideCorrespondingOutputSuggestionByTypingNumber() {
         let fake = FakeAudioSystem()
         fake.inputs = [
             AudioDevice(id: 1, uid: "builtin-mic", name: "Built-in Microphone", isBuiltIn: true),
-            AudioDevice(id: 2, uid: "headset", name: "USB Headset", isBuiltIn: false)
+            AudioDevice(id: 2, uid: "headset-input", name: "USB Headset", isBuiltIn: false)
         ]
         fake.outputs = [
             AudioDevice(id: 11, uid: "builtin-speakers", name: "Built-in Speakers", isBuiltIn: true),
-            AudioDevice(id: 12, uid: "headset", name: "USB Headset", isBuiltIn: false)
+            AudioDevice(id: 12, uid: "headset-output", name: "USB Headset", isBuiltIn: false)
         ]
         fake.defaultInput = fake.inputs[0]
         fake.defaultOutput = fake.outputs[0]

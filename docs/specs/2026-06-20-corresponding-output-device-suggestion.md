@@ -14,9 +14,11 @@ both input and output capability.
 
 ## Requirements
 1. After the user selects an input device, the tool looks for an output device
-   with the same CoreAudio device UID in the output device list.
-2. Matching is by UID equality only — never by name. Two devices with the same
-   name but different UIDs are not considered the same device.
+   with the same name in the output device list.
+2. Matching is by name equality. In CoreAudio, the same physical device often
+   has different UIDs for input and output (e.g. `A8-F5-E1-9D-42-FC:input` and
+   `A8-F5-E1-9D-42-FC:output`), but shares the same name. Name matching detects
+   these as the same device.
 3. When a corresponding output device exists:
    a. The output selection screen is shown as normal (the list is not skipped).
    b. The corresponding output device is placed first in the list (position 1).
@@ -39,7 +41,7 @@ both input and output capability.
    number or Enter to keep current).
 
 ## Non-goals
-- Matching by device name or fuzzy matching.
+- UID-based matching or fuzzy matching.
 - Suggesting an input device from an output selection (input is selected first;
   there is no prior selection to match against).
 - Changing the confirmation flow or the 確定 / キャンセル semantics.
@@ -55,18 +57,18 @@ both input and output capability.
   a behaviour change from today, but it is the whole point of the suggestion.
   The user can still keep the current device by typing its number. The current
   device keeps its `(current)` marker so the user can find it.
-- **Multiple output devices with the same UID**: Cannot happen in CoreAudio
-  (UIDs are unique). If it did, `first(withUID:)` takes the first.
+- **Multiple output devices with the same name**: `first(withName:)` takes the
+  first. Rare in practice (two identical USB interfaces). The user can override
+  by typing a different number.
 - **No match**: Existing behaviour, unchanged.
 - **Prompt text**: The prompt on the output screen must reflect the match. When
   a match exists, the hint changes from "Enter=keep current" to indicate that
   Enter accepts the matched device (exact wording is an implementation detail).
   When no match, the prompt is unchanged.
-- **Chosen tradeoffs**: UID-only over name-matching (avoids false positives on
-  duplicate names — the tests already have devices sharing the name "USB
-  Audio"). Show-and-wait over skip-screen (preserves override ability and
-  visibility). Always-on over a flag (override-by-typing makes it
-  non-intrusive).
+- **Chosen tradeoffs**: Name matching over UID matching (CoreAudio gives the
+  same physical device different UIDs for input and output, but the same name).
+  Show-and-wait over skip-screen (preserves override ability and visibility).
+  Always-on over a flag (override-by-typing makes it non-intrusive).
 
 ## Open questions
 - Exact prompt wording when a match exists (implementation detail, to be
@@ -76,13 +78,13 @@ both input and output capability.
 
 ## Acceptance criteria
 - [ ] When the selected input device has a corresponding output device (same
-      UID), the output screen shows that device first, marked `(matches input)`
+      name), the output screen shows that device first, marked `(matches input)`
       / `(入力と同じ)`.
 - [ ] Pressing Enter on the output screen with a match present selects the
       matched device, even when it differs from the current output.
 - [ ] Typing a different number on the output screen selects that device instead
       of the matched one.
-- [ ] When no output device shares the input device's UID, the output screen
+- [ ] When no output device shares the input device's name, the output screen
       behaves exactly as before.
 - [ ] When the matched device is also the current output device, only
       `(current)` is shown.

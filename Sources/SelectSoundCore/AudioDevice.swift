@@ -23,4 +23,8 @@ extension Array where Element == AudioDevice {
     func first(withUID uid: String) -> AudioDevice? {
         first { $0.uid == uid }
     }
+
+    func first(withName name: String) -> AudioDevice? {
+        first { $0.name == name }
+    }
 }
