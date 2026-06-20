@@ -37,15 +37,22 @@ struct LocalizedStrings {
         }
     }
 
-    func prompt(hasCurrentDevice: Bool) -> String {
-        switch (language, hasCurrentDevice) {
-        case (.japanese, true):
+    func prompt(
+        hasCurrentDevice: Bool,
+        hasSuggestionDifferingFromCurrent: Bool = false
+    ) -> String {
+        switch (language, hasSuggestionDifferingFromCurrent, hasCurrentDevice) {
+        case (.japanese, true, _):
+            return "番号を入力してください（Enter=対応するデバイス、q=キャンセル）: "
+        case (.japanese, false, true):
             return "番号を入力してください（Enter=現在のまま、q=キャンセル）: "
-        case (.japanese, false):
+        case (.japanese, false, false):
             return "番号を入力してください（q=キャンセル）: "
-        case (.english, true):
+        case (.english, true, _):
+            return "Enter a number (Enter=use matched, q=cancel): "
+        case (.english, false, true):
             return "Enter a number (Enter=keep current, q=cancel): "
-        case (.english, false):
+        case (.english, false, false):
             return "Enter a number (q=cancel): "
         }
     }
@@ -56,6 +63,15 @@ struct LocalizedStrings {
             return "現在"
         case .english:
             return "current"
+        }
+    }
+
+    var matchesInputMarker: String {
+        switch language {
+        case .japanese:
+            return "入力と同じ"
+        case .english:
+            return "matches input"
         }
     }
 
@@ -313,6 +329,8 @@ struct LocalizedStrings {
               Enter  確認画面でOK
               Esc    確認画面でキャンセル
 
+            選んだ音声入力デバイスと対応する音声出力デバイスがある場合、出力画面でそのデバイスを提案します。Enter で提案を受け入れ、別の番号で上書きできます。
+
             """
         case .english:
             return """
@@ -346,6 +364,8 @@ struct LocalizedStrings {
               q      Cancel
               Enter  OK on the confirmation screen
               Esc    Cancel on the confirmation screen
+
+            When the selected input device has a corresponding output device (the same physical device), it is suggested on the output screen. Press Enter to accept the suggestion, or type a number to override.
 
             """
         }

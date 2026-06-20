@@ -442,6 +442,144 @@ final class SelectSoundCommandTests: XCTestCase {
         XCTAssertTrue(result.stdout.contains("USB Audio (UID: input-3)"))
     }
 
+    func testSuggestsCorrespondingOutputDeviceWhenUIDMatches() {
+        let fake = FakeAudioSystem()
+        fake.inputs = [
+            AudioDevice(id: 1, uid: "builtin-mic", name: "Built-in Microphone", isBuiltIn: true),
+            AudioDevice(id: 2, uid: "headset", name: "USB Headset", isBuiltIn: false)
+        ]
+        fake.outputs = [
+            AudioDevice(id: 11, uid: "builtin-speakers", name: "Built-in Speakers", isBuiltIn: true),
+            AudioDevice(id: 12, uid: "headset", name: "USB Headset", isBuiltIn: false)
+        ]
+        fake.defaultInput = fake.inputs[0]
+        fake.defaultOutput = fake.outputs[0]
+
+        let result = runCommand(fake: fake, input: ["2", ""], confirmationKeys: [.enter])
+
+        XCTAssertEqual(result.code, 0)
+        XCTAssertEqual(fake.defaultInput?.uid, "headset")
+        XCTAssertEqual(fake.defaultOutput?.uid, "headset")
+    }
+
+    func testShowsMatchesInputMarkerForCorrespondingOutputDevice() {
+        let fake = FakeAudioSystem()
+        fake.inputs = [
+            AudioDevice(id: 1, uid: "builtin-mic", name: "Built-in Microphone", isBuiltIn: true),
+            AudioDevice(id: 2, uid: "headset", name: "USB Headset", isBuiltIn: false)
+        ]
+        fake.outputs = [
+            AudioDevice(id: 11, uid: "builtin-speakers", name: "Built-in Speakers", isBuiltIn: true),
+            AudioDevice(id: 12, uid: "headset", name: "USB Headset", isBuiltIn: false)
+        ]
+        fake.defaultInput = fake.inputs[0]
+        fake.defaultOutput = fake.outputs[0]
+
+        let result = runCommand(fake: fake, input: ["2", ""], confirmationKeys: [.escape])
+
+        XCTAssertTrue(result.stdout.contains("USB Headset (matches input)"))
+    }
+
+    func testPlacesCorrespondingOutputDeviceFirstInList() {
+        let fake = FakeAudioSystem()
+        fake.inputs = [
+            AudioDevice(id: 1, uid: "builtin-mic", name: "Built-in Microphone", isBuiltIn: true),
+            AudioDevice(id: 2, uid: "headset", name: "USB Headset", isBuiltIn: false)
+        ]
+        fake.outputs = [
+            AudioDevice(id: 11, uid: "builtin-speakers", name: "Built-in Speakers", isBuiltIn: true),
+            AudioDevice(id: 12, uid: "headset", name: "USB Headset", isBuiltIn: false)
+        ]
+        fake.defaultInput = fake.inputs[0]
+        fake.defaultOutput = fake.outputs[0]
+
+        let result = runCommand(fake: fake, input: ["2", ""], confirmationKeys: [.escape])
+
+        let outputListStart = result.stdout.range(of: "Select an audio output device:")
+        XCTAssertNotNil(outputListStart)
+        let outputSection = result.stdout[outputListStart!.upperBound...]
+        let headsetRange = outputSection.range(of: "1. USB Headset")
+        XCTAssertNotNil(headsetRange, "Corresponding output device should be at position 1")
+    }
+
+    func testDoesNotShowMatchesInputMarkerWhenCorrespondingDeviceIsCurrent() {
+        let fake = FakeAudioSystem()
+        fake.inputs = [
+            AudioDevice(id: 1, uid: "builtin-mic", name: "Built-in Microphone", isBuiltIn: true),
+            AudioDevice(id: 2, uid: "headset", name: "USB Headset", isBuiltIn: false)
+        ]
+        fake.outputs = [
+            AudioDevice(id: 11, uid: "builtin-speakers", name: "Built-in Speakers", isBuiltIn: true),
+            AudioDevice(id: 12, uid: "headset", name: "USB Headset", isBuiltIn: false)
+        ]
+        fake.defaultInput = fake.inputs[0]
+        fake.defaultOutput = fake.outputs[1]
+
+        let result = runCommand(fake: fake, input: ["2", ""], confirmationKeys: [.escape])
+
+        XCTAssertTrue(result.stdout.contains("USB Headset (current)"))
+        XCTAssertFalse(result.stdout.contains("USB Headset (matches input)"))
+    }
+
+    func testEnterAcceptsMatchedOutputDeviceEvenWhenDifferentFromCurrent() {
+        let fake = FakeAudioSystem()
+        fake.inputs = [
+            AudioDevice(id: 1, uid: "builtin-mic", name: "Built-in Microphone", isBuiltIn: true),
+            AudioDevice(id: 2, uid: "headset", name: "USB Headset", isBuiltIn: false)
+        ]
+        fake.outputs = [
+            AudioDevice(id: 11, uid: "builtin-speakers", name: "Built-in Speakers", isBuiltIn: true),
+            AudioDevice(id: 12, uid: "headset", name: "USB Headset", isBuiltIn: false)
+        ]
+        fake.defaultInput = fake.inputs[0]
+        fake.defaultOutput = fake.outputs[0]
+
+        let result = runCommand(fake: fake, input: ["2", ""], confirmationKeys: [.enter])
+
+        XCTAssertEqual(result.code, 0)
+        XCTAssertEqual(fake.defaultOutput?.uid, "headset")
+        XCTAssertEqual(fake.setOutputHistory, ["headset"])
+    }
+
+    func testOverrideCorrespondingOutputSuggestionByTypingNumber() {
+        let fake = FakeAudioSystem()
+        fake.inputs = [
+            AudioDevice(id: 1, uid: "builtin-mic", name: "Built-in Microphone", isBuiltIn: true),
+            AudioDevice(id: 2, uid: "headset", name: "USB Headset", isBuiltIn: false)
+        ]
+        fake.outputs = [
+            AudioDevice(id: 11, uid: "builtin-speakers", name: "Built-in Speakers", isBuiltIn: true),
+            AudioDevice(id: 12, uid: "headset", name: "USB Headset", isBuiltIn: false)
+        ]
+        fake.defaultInput = fake.inputs[0]
+        fake.defaultOutput = fake.outputs[0]
+
+        let result = runCommand(fake: fake, input: ["2", "2"], confirmationKeys: [.enter])
+
+        XCTAssertEqual(result.code, 0)
+        XCTAssertEqual(fake.defaultOutput?.uid, "builtin-speakers")
+    }
+
+    func testNoCorrespondingOutputDeviceKeepsExistingBehavior() {
+        let fake = FakeAudioSystem()
+        fake.inputs = [
+            AudioDevice(id: 1, uid: "input-1", name: "Built-in Microphone", isBuiltIn: true),
+            AudioDevice(id: 2, uid: "input-2", name: "USB Microphone", isBuiltIn: false)
+        ]
+        fake.outputs = [
+            AudioDevice(id: 11, uid: "output-1", name: "Built-in Speakers", isBuiltIn: true),
+            AudioDevice(id: 12, uid: "output-2", name: "USB Speakers", isBuiltIn: false)
+        ]
+        fake.defaultInput = fake.inputs[0]
+        fake.defaultOutput = fake.outputs[0]
+
+        let result = runCommand(fake: fake, input: ["2", ""], confirmationKeys: [.enter])
+
+        XCTAssertEqual(result.code, 0)
+        XCTAssertEqual(fake.defaultOutput?.uid, "output-1")
+        XCTAssertFalse(result.stdout.contains("matches input"))
+    }
+
     func testVersionDoesNotTouchAudioSystem() {
         let fake = FakeAudioSystem()
 
